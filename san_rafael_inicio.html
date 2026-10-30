@@ -258,6 +258,155 @@
         gap: 6px;
     }
 }
+    /* CARRITO DE COMPRAS */
+
+.cart-section {
+    max-width: 1000px;
+    margin: 45px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,.08);
+}
+
+.cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.cart-header h2 {
+    color: #222;
+    font-size: 23px;
+}
+
+#cartCount {
+    background: #fdeaea;
+    color: #C62828;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-info strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.cart-item-info span {
+    color: #777;
+    font-size: 14px;
+}
+
+.cart-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cart-actions button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.quantity-button {
+    background: #eee;
+    font-weight: bold;
+}
+
+.remove-item {
+    background: #fdeaea;
+    color: #C62828;
+}
+
+.cart-footer {
+    margin-top: 25px;
+}
+
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.cart-total strong {
+    color: #C62828;
+    font-size: 24px;
+}
+
+#checkoutButton {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 8px;
+    background: #C62828;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#checkoutButton:hover:not(:disabled) {
+    background: #A51F1F;
+}
+
+#checkoutButton:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+.empty-cart {
+    color: #777;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.payment-info {
+    color: #888;
+    text-align: center;
+    font-size: 12px;
+    margin-top: 12px;
+}
+
+@media(max-width: 600px) {
+    .cart-section {
+        margin: 25px 12px;
+        padding: 18px;
+    }
+
+    .cart-item {
+        flex-wrap: wrap;
+    }
+
+    .cart-header h2 {
+        font-size: 19px;
+    }
+
+    .cart-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
   </style>
 </head>
 <body>
@@ -286,13 +435,37 @@
     </nav>
   </header>
 
-<!-- Aquí comienza el carrito -->
+<!-- CARRITO DE COMPRAS -->
 <section id="carrito" class="cart-section">
-    ...
+
+    <div class="cart-header">
+        <h2>🛒 Mi carrito de compras</h2>
+        <span id="cartCount">0 productos</span>
+    </div>
+
+    <div id="cartItems">
+        <p class="empty-cart">Tu carrito está vacío.</p>
+    </div>
+
+    <div class="cart-footer">
+
+        <div class="cart-total">
+            <span>Total de compra:</span>
+            <strong id="cartTotal">$0</strong>
+        </div>
+
+        <button id="checkoutButton" type="button" disabled>
+            Pagar con Webpay Plus
+        </button>
+
+        <p class="payment-info">
+            Serás redirigido a la plataforma de pago seguro.
+        </p>
+
+    </div>
+
 </section>
-
-<!-- Después continúa el catálogo -->
-
+<!-- FIN CARRITO -->
   <main>
     <section class="hero" id="inicio">
       <div class="hero-copy">
@@ -488,8 +661,35 @@
     price.textContent = formatPrice(product.precio);
 
     info.append(cat, name, format, stock, price);
-    card.append(image, info);
-    productGrid.append(card);
+
+// Botón para agregar al carrito
+const addButton = document.createElement("button");
+addButton.textContent = "Agregar al carrito";
+addButton.type = "button";
+addButton.style.cssText = `
+  width: 100%;
+  padding: 11px;
+  margin-top: 12px;
+  background: #C62828;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-weight: bold;
+  cursor: pointer;
+`;
+
+if (estado === "agotado") {
+  addButton.disabled = true;
+  addButton.textContent = "Producto agotado";
+  addButton.style.background = "#aaa";
+} else {
+  addButton.addEventListener("click", function() {
+    addToCart(product.nombre, product.precio);
+  });
+}
+
+card.append(image, info, addButton);
+productGrid.append(card);
   });
 }
 
@@ -541,5 +741,185 @@ async function loadProducts() {
     categoryFilter.addEventListener("change", renderProducts);
     loadProducts();
   </script>
+  <script>
+const CART_STORAGE_KEY = "sanrafael_cart";
+
+let cart = [];
+
+try {
+    const savedCart = JSON.parse(
+        localStorage.getItem(CART_STORAGE_KEY) || "[]"
+    );
+
+    if (Array.isArray(savedCart)) {
+        cart = savedCart.filter(item =>
+            item &&
+            typeof item.name === "string" &&
+            Number.isSafeInteger(item.price) &&
+            item.price > 0 &&
+            Number.isSafeInteger(item.quantity) &&
+            item.quantity > 0
+        );
+    }
+} catch (error) {
+    cart = [];
+}
+
+function saveCart() {
+    localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(cart)
+    );
+
+    renderCart();
+}
+
+function addToCart(name, price) {
+    price = Number(String(price).replace(/[^\d]/g, ""));
+
+    if (!name || !Number.isSafeInteger(price) || price <= 0) {
+        alert("No se pudo agregar este producto.");
+        return;
+    }
+
+    const existing = cart.find(item => item.name === name);
+
+    if (existing) {
+        existing.quantity++;
+    } else {
+        cart.push({
+            name: name,
+            price: price,
+            quantity: 1
+        });
+    }
+
+    saveCart();
+}
+
+function changeQuantity(name, amount) {
+    const item = cart.find(product => product.name === name);
+
+    if (!item) return;
+
+    item.quantity += amount;
+
+    if (item.quantity <= 0) {
+        removeFromCart(name);
+        return;
+    }
+
+    saveCart();
+}
+
+function removeFromCart(name) {
+    cart = cart.filter(item => item.name !== name);
+    saveCart();
+}
+
+function formatPrice(price) {
+    return "$" + Number(price).toLocaleString("es-CL");
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function renderCart() {
+    const container = document.getElementById("cartItems");
+    const totalElement = document.getElementById("cartTotal");
+    const countElement = document.getElementById("cartCount");
+    const checkoutButton = document.getElementById("checkoutButton");
+
+    if (!container || !totalElement || !countElement || !checkoutButton) {
+        return;
+    }
+
+    const totalQuantity = cart.reduce(
+        (sum, item) => sum + item.quantity, 0
+    );
+
+    const total = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity, 0
+    );
+
+    countElement.textContent =
+        totalQuantity + (totalQuantity === 1 ? " producto" : " productos");
+
+    if (cart.length === 0) {
+        container.innerHTML =
+            '<p class="empty-cart">Tu carrito está vacío.</p>';
+    } else {
+        container.innerHTML = cart.map(item => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <strong>${escapeHTML(item.name)}</strong>
+                    <span>${formatPrice(item.price)} por unidad</span>
+                </div>
+
+                <div class="cart-actions">
+                    <button type="button"
+                        class="quantity-button"
+                        data-action="decrease"
+                        data-name="${escapeHTML(item.name)}">−</button>
+
+                    <span>${item.quantity}</span>
+
+                    <button type="button"
+                        class="quantity-button"
+                        data-action="increase"
+                        data-name="${escapeHTML(item.name)}">+</button>
+
+                    <button type="button"
+                        class="remove-item"
+                        data-action="remove"
+                        data-name="${escapeHTML(item.name)}">Eliminar</button>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    totalElement.textContent = formatPrice(total);
+    checkoutButton.disabled = cart.length === 0;
+}
+
+const cartItems = document.getElementById("cartItems");
+
+if (cartItems) {
+    cartItems.addEventListener("click", function(event) {
+        const button = event.target.closest("button[data-action]");
+
+        if (!button) return;
+
+        const name = button.dataset.name;
+        const action = button.dataset.action;
+
+        if (action === "increase") changeQuantity(name, 1);
+        if (action === "decrease") changeQuantity(name, -1);
+        if (action === "remove") removeFromCart(name);
+    });
+}
+
+const checkoutButton = document.getElementById("checkoutButton");
+
+if (checkoutButton) {
+    checkoutButton.addEventListener("click", function() {
+        if (cart.length === 0) return;
+
+        alert(
+            "El carrito está funcionando. " +
+            "Todavía falta conectar el servidor de pagos Webpay Plus."
+        );
+    });
+}
+
+renderCart();
+</script>
 </body>
 </html>
