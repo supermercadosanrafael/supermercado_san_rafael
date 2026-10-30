@@ -6,6 +6,26 @@
   <meta name="description" content="Supermercado San Rafael. Productos, ofertas y despacho a domicilio en San Fernando.">
   <title>Supermercado San Rafael</title>
   <style>
+    .nav-account {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    color: #222;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.nav-account:hover {
+    background: #ed171c;
+    color: white;
+    border-color: #ed171c;
+}
     :root {
       --red: #ed171c;
       --red-dark: #c91016;
@@ -206,7 +226,9 @@
         <img src="LOGO SAN RAFAEL.jpg" alt="Logo Supermercado San Rafael">
         <span><strong>SUPERMERCADO SAN RAFAEL</strong><small>Todo lo que necesitas, cerca de ti</small></span>
       </a>
-      <div class="navlinks">
+<a href="cuenta.html" class="nav-account">
+    <span>👤</span> Mi cuenta
+</a>
         <a href="#productos">Productos</a>
         <a href="#horarios">Horarios</a>
         <a href="#despachos">Despachos</a>
