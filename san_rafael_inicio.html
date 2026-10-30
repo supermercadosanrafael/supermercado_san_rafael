@@ -215,6 +215,41 @@
       .product-info { padding: 12px; }
       .delivery-box { grid-template-columns: 1fr; padding: 22px; }
     }
+    .account-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-account,
+.nav-register {
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.nav-account {
+    color: #16803c;
+    border: 1px solid #16803c;
+}
+
+.nav-register {
+    color: white;
+    background: #16803c;
+}
+
+.nav-register:hover {
+    background: #11652f;
+}
+
+@media(max-width: 600px) {
+    .account-buttons {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}
   </style>
 </head>
 <body>
