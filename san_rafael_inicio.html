@@ -371,54 +371,71 @@
     }
 
     function renderProducts() {
-      const query = searchInput.value.trim().toLowerCase();
-      const category = categoryFilter.value;
-      const filtered = products.filter(product =>
-        (product.nombre || "").toLowerCase().includes(query) &&
-        (!category || product.categoria === category)
-      );
+  const query = searchInput.value.trim().toLowerCase();
+  const category = categoryFilter.value;
 
-      productGrid.innerHTML = "";
-      if (!filtered.length) {
-        productGrid.innerHTML = '<div class="empty">No encontramos productos con esa búsqueda.</div>';
-        return;
-      }
+  const filtered = products.filter(product =>
+    (product.nombre || "").toLowerCase().includes(query) &&
+    (!category || product.categoria === category)
+  );
 
-      filtered.forEach(product => {
-        const card = document.createElement("article");
-        card.className = "product-card";
+  productGrid.innerHTML = "";
 
-        const image = document.createElement("img");
-        image.src = product.imagen || "https://placehold.co/600x400?text=San+Rafael";
-        image.alt = product.nombre || "Producto";
-        image.loading = "lazy";
-        image.onerror = () => { image.src = "https://placehold.co/600x400?text=Producto"; };
+  if (!filtered.length) {
+    productGrid.innerHTML =
+      '<div class="empty">No encontramos productos con esa búsqueda.</div>';
+    return;
+  }
 
-        const info = document.createElement("div");
-        info.className = "product-info";
+  filtered.forEach(product => {
+    const card = document.createElement("article");
+    card.className = "product-card";
 
-        const cat = document.createElement("div");
-        cat.className = "product-category";
-        cat.textContent = product.categoria || "Producto";
+    const image = document.createElement("img");
+    image.src = product.imagen || "https://placehold.co/600x400?text=San+Rafael";
+    image.alt = product.nombre || "Producto";
+    image.loading = "lazy";
+    image.onerror = () => {
+      image.onerror = null;
+      image.src = "https://placehold.co/600x400?text=Producto";
+    };
 
-        const name = document.createElement("h3");
-        name.textContent = product.nombre || "Producto sin nombre";
+    const info = document.createElement("div");
+    info.className = "product-info";
 
-        const price = document.createElement("div");
-        price.className = "price";
-        price.textContent = formatPrice(product.precio);
+    const cat = document.createElement("div");
+    cat.className = "product-category";
+    cat.textContent = product.categoria || "Sin categoría";
 
-        info.append(cat, name, price);
-        if (product.descripcion) {
-          const desc = document.createElement("p");
-          desc.textContent = product.descripcion;
-          desc.style.cssText = "color:#686868;font-size:.85rem;line-height:1.5";
-          info.append(desc);
-        }
-        card.append(image, info);
-        productGrid.append(card);
-      });
+    const name = document.createElement("h3");
+    name.textContent = product.nombre || "Producto sin nombre";
+
+    const format = document.createElement("p");
+    format.textContent = "Formato: " + (product.formato || "No especificado");
+    format.style.cssText = "color:#686868;font-size:.85rem;margin:8px 0";
+
+    const stock = document.createElement("p");
+    const estado = (product.disponibilidad || "").trim().toLowerCase();
+
+    if (estado === "en stock") {
+      stock.textContent = "● En stock";
+      stock.style.cssText = "color:#16803c;font-weight:600;font-size:.85rem;margin:8px 0";
+    } else if (estado === "agotado") {
+      stock.textContent = "● Agotado";
+      stock.style.cssText = "color:#d93025;font-weight:600;font-size:.85rem;margin:8px 0";
+    } else {
+      stock.textContent = "";
     }
+
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = formatPrice(product.precio);
+
+    info.append(cat, name, format, stock, price);
+    card.append(image, info);
+    productGrid.append(card);
+  });
+}
 
     
 async function loadProducts() {
