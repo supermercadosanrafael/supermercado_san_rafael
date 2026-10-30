@@ -420,28 +420,49 @@
       });
     }
 
-    async function loadProducts() {
-      if (SHEET_CSV_URL.startsWith("https://docs.google.com/spreadsheets/d/e/2PACX-1vQJxygXZYbLKYH1UJwpDCYpDjOt4oljnhsrxRV4jOU9hc2grLegC1gvRAYc-QQngA/pub?output=csv")) {
-        productGrid.innerHTML = '<div class="empty">Conecta tu Google Sheets pegando la URL CSV en la variable <strong>SHEET_CSV_URL</strong> del código.</div>';
-        return;
-      }
-      try {
-        const response = await fetch(SHEET_CSV_URL);
-        if (!response.ok) throw new Error("No se pudo consultar la planilla.");
-        products = parseCSV(await response.text());
-        const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))].sort();
-        categories.forEach(category => {
-          const option = document.createElement("option");
-          option.value = category;
-          option.textContent = category;
-          categoryFilter.append(option);
-        });
-        renderProducts();
-      } catch (error) {
-        productGrid.innerHTML = '<div class="error">No fue posible cargar el catálogo. Revisa que la hoja esté publicada como CSV y que el enlace sea correcto.</div>';
-        console.error(error);
-      }
+    
+async function loadProducts() {
+  try {
+    const response = await fetch(SHEET_CSV_URL);
+
+    if (!response.ok) {
+      throw new Error("No se pudo consultar la planilla.");
     }
+
+    const csvText = await response.text();
+    const rows = parseCSV(csvText);
+
+    products = rows.map(row => ({
+      nombre: row["nombre del producto"] || "",
+      imagen: row["foto (nombre del archivo)"] || "",
+      precio: row["precio (clp)"] || "0",
+      categoria: row["categoría"] || "",
+      formato: row["formato / peso"] || "",
+      disponibilidad: row["disponibilidad"] || ""
+    }));
+
+    categoryFilter.innerHTML =
+      '<option value="">Todas las categorías</option>';
+
+    const categories = [
+      ...new Set(products.map(p => p.categoria).filter(Boolean))
+    ].sort();
+
+    categories.forEach(category => {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      categoryFilter.append(option);
+    });
+
+    renderProducts();
+
+  } catch (error) {
+    console.error("Error cargando productos:", error);
+    productGrid.innerHTML =
+      '<div class="empty">No se pudieron cargar los productos.</div>';
+  }
+}
 
     searchInput.addEventListener("input", renderProducts);
     categoryFilter.addEventListener("change", renderProducts);
