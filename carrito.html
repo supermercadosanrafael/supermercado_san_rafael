@@ -1,1 +1,310 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi carrito | Supermercado San Rafael</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    header {
+      background: white;
+      padding: 18px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      box-shadow: 0 2px 8px #00000012;
+    }
+
+    header img {
+      max-width: 150px;
+      max-height: 65px;
+      object-fit: contain;
+    }
+
+    header a {
+      color: #C62828;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 25px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 3px 15px #00000010;
+    }
+
+    h1 { margin-top: 0; }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 17px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cart-item-info { flex: 1; }
+
+    .cart-item-info span {
+      display: block;
+      color: #777;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .cart-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-weight: bold;
+    }
+
+    .quantity-button { background: #eee; }
+    .remove-item { background: #fdeaea; color: #C62828; }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      margin: 25px 0;
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .total strong { color: #C62828; }
+
+    #checkoutButton {
+      width: 100%;
+      padding: 16px;
+      background: #C62828;
+      color: white;
+      font-size: 16px;
+    }
+
+    #checkoutButton:hover { background: #A51F1F; }
+
+    #checkoutButton:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    #loginNotice {
+      display: none;
+      margin-top: 18px;
+      padding: 15px;
+      background: #fff3f3;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    #loginNotice a {
+      color: #C62828;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      padding: 35px 0;
+    }
+
+    @media(max-width: 600px) {
+      main { margin: 20px 12px; padding: 18px; }
+      .cart-item { flex-wrap: wrap; }
+      .cart-actions { width: 100%; justify-content: flex-end; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="index.html">
+    <img src="imagenes/logo.jpeg" alt="Supermercado San Rafael">
+  </a>
+  <a href="index.html">← Volver a la tienda</a>
+</header>
+
+<main>
+  <h1>🛒 Mi carrito</h1>
+
+  <div id="userStatus">Comprobando sesión...</div>
+
+  <div id="cartItems">
+    <p class="empty">Cargando carrito...</p>
+  </div>
+
+  <div class="total">
+    <span>Total:</span>
+    <strong id="cartTotal">$0</strong>
+  </div>
+
+  <button id="checkoutButton" disabled>
+    Iniciar sesión para pagar
+  </button>
+
+  <div id="loginNotice">
+    Para continuar con tu compra debes
+    <a href="iniciar-sesion.html?redirect=carrito.html">
+      iniciar sesión
+    </a>
+    o <a href="cuenta.html">crear una cuenta</a>.
+  </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+const CART_STORAGE_KEY = "sanrafael_cart";
+let cart = [];
+let usuarioAutenticado = false;
+
+try {
+  const saved = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
+  if (Array.isArray(saved)) {
+    cart = saved.filter(item =>
+      item &&
+      typeof item.name === "string" &&
+      Number.isSafeInteger(item.price) &&
+      item.price > 0 &&
+      Number.isSafeInteger(item.quantity) &&
+      item.quantity > 0
+    );
+  }
+} catch (error) {
+  cart = [];
+}
+
+function formatPrice(price) {
+  return "$" + Number(price).toLocaleString("es-CL");
+}
+
+function saveCart() {
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById("cartItems");
+  const totalElement = document.getElementById("cartTotal");
+
+  if (cart.length === 0) {
+    container.innerHTML =
+      '<p class="empty">Tu carrito está vacío. <a href="index.html">Ver productos</a></p>';
+  } else {
+    container.innerHTML = cart.map((item, index) => `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <strong>${escapeHTML(item.name)}</strong>
+          <span>${formatPrice(item.price)} por unidad</span>
+        </div>
+        <div class="cart-actions">
+          <button class="quantity-button" data-action="decrease" data-index="${index}">−</button>
+          <span>${item.quantity}</span>
+          <button class="quantity-button" data-action="increase" data-index="${index}">+</button>
+          <button class="remove-item" data-action="remove" data-index="${index}">Eliminar</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  const total = cart.reduce((sum, item) =>
+    sum + item.price * item.quantity, 0
+  );
+
+  totalElement.textContent = formatPrice(total);
+  updateCheckout();
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+document.getElementById("cartItems").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const index = Number(button.dataset.index);
+  const action = button.dataset.action;
+  if (!cart[index]) return;
+
+  if (action === "increase") cart[index].quantity++;
+  if (action === "decrease") cart[index].quantity--;
+  if (action === "remove" || cart[index].quantity <= 0) {
+    cart.splice(index, 1);
+  }
+
+  saveCart();
+});
+
+function updateCheckout() {
+  const button = document.getElementById("checkoutButton");
+  const notice = document.getElementById("loginNotice");
+
+  if (cart.length === 0) {
+    button.disabled = true;
+    button.textContent = "Carrito vacío";
+    notice.style.display = "none";
+  } else if (!usuarioAutenticado) {
+    button.disabled = true;
+    button.textContent = "Iniciar sesión para pagar";
+    notice.style.display = "block";
+  } else {
+    button.disabled = false;
+    button.textContent = "Continuar a Webpay Plus";
+    notice.style.display = "none";
+  }
+}
+
+auth.onAuthStateChanged(user => {
+  usuarioAutenticado = !!(user && user.emailVerified);
+
+  document.getElementById("userStatus").textContent =
+    usuarioAutenticado
+      ? "Sesión iniciada: " + user.email
+      : "No has iniciado sesión.";
+
+  updateCheckout();
+});
+
+document.getElementById("checkoutButton").addEventListener("click", () => {
+  if (!usuarioAutenticado || cart.length === 0) return;
+
+  alert("Tu sesión está activa. El siguiente paso es conectar el servidor de Webpay Plus.");
+});
+
+renderCart();
+</script>
+
+</body>
+</html>
+
