@@ -662,10 +662,10 @@
 
     info.append(cat, name, format, stock, price);
 
-// Botón para agregar al carrito
 const addButton = document.createElement("button");
 addButton.textContent = "Agregar al carrito";
 addButton.type = "button";
+
 addButton.style.cssText = `
   width: 100%;
   padding: 11px;
@@ -681,7 +681,6 @@ addButton.style.cssText = `
 if (estado === "agotado") {
   addButton.disabled = true;
   addButton.textContent = "Producto agotado";
-  addButton.style.background = "#aaa";
 } else {
   addButton.addEventListener("click", function() {
     addToCart(product.nombre, product.precio);
