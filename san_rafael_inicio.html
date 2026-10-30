@@ -421,7 +421,7 @@
     }
 
     async function loadProducts() {
-      if (SHEET_CSV_URL.startsWith("PEGA_AQUI")) {
+      if (SHEET_CSV_URL.startsWith("https://docs.google.com/spreadsheets/d/e/2PACX-1vQJxygXZYbLKYH1UJwpDCYpDjOt4oljnhsrxRV4jOU9hc2grLegC1gvRAYc-QQngA/pub?gid=869792913&single=true&output=csv")) {
         productGrid.innerHTML = '<div class="empty">Conecta tu Google Sheets pegando la URL CSV en la variable <strong>SHEET_CSV_URL</strong> del código.</div>';
         return;
       }
