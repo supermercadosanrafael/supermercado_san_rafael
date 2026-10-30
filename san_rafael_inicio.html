@@ -658,7 +658,11 @@
 
     const price = document.createElement("div");
     price.className = "price";
-    price.textContent = formatPrice(product.precio);
+    const precioNumerico = Number(
+  String(product.precio || "").replace(/[^\d]/g, "")
+);
+
+price.textContent = formatPrice(precioNumerico);
 
     info.append(cat, name, format, stock, price);
 
@@ -683,7 +687,7 @@ if (estado === "agotado") {
   addButton.textContent = "Producto agotado";
 } else {
   addButton.addEventListener("click", function() {
-    addToCart(product.nombre, product.precio);
+    addToCart(product.nombre, precioNumerico);
   });
 }
 
