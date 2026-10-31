@@ -181,6 +181,7 @@
 const CART_STORAGE_KEY = "sanrafael_cart";
 let cart = [];
 let usuarioAutenticado = false;
+renderCart();
 
 try {
   const saved = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
@@ -285,16 +286,32 @@ function updateCheckout() {
   }
 }
 
-auth.onAuthStateChanged(user => {
-  usuarioAutenticado = !!(user && user.emailVerified);
+// Comprobar inicio de sesión
+try {
+  if (typeof auth !== "undefined" && auth) {
 
+    auth.onAuthStateChanged(user => {
+      usuarioAutenticado = !!(user && user.emailVerified);
+
+      document.getElementById("userStatus").textContent =
+        usuarioAutenticado
+          ? "Sesión iniciada: " + user.email
+          : "No has iniciado sesión.";
+
+      updateCheckout();
+    });
+
+  } else {
+    document.getElementById("userStatus").textContent =
+      "No se pudo comprobar la sesión.";
+    updateCheckout();
+  }
+} catch (error) {
+  console.error("Error de autenticación:", error);
   document.getElementById("userStatus").textContent =
-    usuarioAutenticado
-      ? "Sesión iniciada: " + user.email
-      : "No has iniciado sesión.";
-
+    "No se pudo comprobar la sesión.";
   updateCheckout();
-});
+}renderCart();
 
 document.getElementById("checkoutButton").addEventListener("click", () => {
   if (!usuarioAutenticado || cart.length === 0) return;
