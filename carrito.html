@@ -140,7 +140,7 @@
 <body>
 
 <header>
-  <a href="index.html">
+  <a href="san_rafael_inicio.html">
     <img src="imagenes/logo.jpeg" alt="Supermercado San Rafael">
   </a>
   <a href="./san_rafael_inicio.html">← Volver a la tienda</a>
@@ -181,7 +181,6 @@
 const CART_STORAGE_KEY = "sanrafael_cart";
 let cart = [];
 let usuarioAutenticado = false;
-renderCart();
 
 try {
   const saved = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
@@ -214,7 +213,7 @@ function renderCart() {
 
   if (cart.length === 0) {
     container.innerHTML =
-      '<p class="empty">Tu carrito está vacío. <a href="index.html">Ver productos</a></p>';
+      '<p class="empty">Tu carrito está vacío. <a href="san_rafael_inicio.html">Ver productos</a></p>';
   } else {
     container.innerHTML = cart.map((item, index) => `
       <div class="cart-item">
@@ -311,7 +310,9 @@ try {
   document.getElementById("userStatus").textContent =
     "No se pudo comprobar la sesión.";
   updateCheckout();
-}renderCart();
+}
+  
+  renderCart();
 
 document.getElementById("checkoutButton").addEventListener("click", () => {
   if (!usuarioAutenticado || cart.length === 0) return;
@@ -319,7 +320,6 @@ document.getElementById("checkoutButton").addEventListener("click", () => {
   alert("Tu sesión está activa. El siguiente paso es conectar el servidor de Webpay Plus.");
 });
 
-renderCart();
 </script>
 
 </body>
