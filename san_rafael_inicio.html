@@ -701,25 +701,57 @@ productGrid.append(card);
 }
 
     
+
 async function loadProducts() {
   try {
-    const response = await fetch(SHEET_CSV_URL);
+    let firestoreProducts = [];
 
-    if (!response.ok) {
-      throw new Error("No se pudo consultar la planilla.");
+    try {
+      const snapshot = await db.collection("productos").get();
+
+      firestoreProducts = snapshot.docs.map(doc => {
+        const data = doc.data();
+
+        return {
+          nombre: data.nombre || "",
+          imagen: data.imagen || "",
+          precio: String(data.precio || 0),
+          categoria: data.categoria || "",
+          formato: data.formato || "",
+          disponibilidad: data.disponibilidad || ""
+        };
+      });
+
+    } catch (firestoreError) {
+      console.warn(
+        "No se pudieron cargar productos desde Firestore:",
+        firestoreError
+      );
     }
 
-    const csvText = await response.text();
-    const rows = parseCSV(csvText);
+    if (firestoreProducts.length > 0) {
+      products = firestoreProducts;
+    } else {
+      console.log("Firestore está vacío. Usando Google Sheets.");
 
-    products = rows.map(row => ({
-      nombre: row["nombre del producto"] || "",
-      imagen: row["foto (nombre del archivo)"] || "",
-      precio: row["precio (clp)"] || "0",
-      categoria: row["categoría"] || "",
-      formato: row["formato / peso"] || "",
-      disponibilidad: row["disponibilidad"] || ""
-    }));
+      const response = await fetch(SHEET_CSV_URL);
+
+      if (!response.ok) {
+        throw new Error("No se pudo consultar Google Sheets.");
+      }
+
+      const csvText = await response.text();
+      const rows = parseCSV(csvText);
+
+      products = rows.map(row => ({
+        nombre: row["nombre del producto"] || "",
+        imagen: row["foto (nombre del archivo)"] || "",
+        precio: row["precio (clp)"] || "0",
+        categoria: row["categoría"] || "",
+        formato: row["formato / peso"] || "",
+        disponibilidad: row["disponibilidad"] || ""
+      }));
+    }
 
     categoryFilter.innerHTML =
       '<option value="">Todas las categorías</option>';
@@ -739,10 +771,12 @@ async function loadProducts() {
 
   } catch (error) {
     console.error("Error cargando productos:", error);
+
     productGrid.innerHTML =
       '<div class="empty">No se pudieron cargar los productos.</div>';
   }
 }
+
 
     searchInput.addEventListener("input", renderProducts);
     categoryFilter.addEventListener("change", renderProducts);
